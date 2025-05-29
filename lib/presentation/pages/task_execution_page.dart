@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/config/theme/colors.dart';
 import '../../core/utils/context_helper.dart';
+import '../../domain/entities/field_entity.dart';
 import '../../domain/entities/task_entity.dart';
 import '../bloc/task_execution/task_execution_bloc.dart';
 import '../bloc/task_execution/task_execution_event.dart';
@@ -54,6 +55,27 @@ class _TaskExecutionPageState extends State<TaskExecutionPage> {
     }
   }
 
+  void _syncControllers(
+    List<FieldEntity> fields,
+    Map<String, dynamic> formValues,
+  ) {
+    for (var field in fields) {
+      final value = formValues[field.label]?.toString() ?? '';
+
+      final controller = _controllers.putIfAbsent(
+        field.label,
+        () => TextEditingController(),
+      );
+
+      if (controller.text != value) {
+        controller.text = value;
+        controller.selection = TextSelection.fromPosition(
+          TextPosition(offset: controller.text.length),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -89,23 +111,7 @@ class _TaskExecutionPageState extends State<TaskExecutionPage> {
               formValues = state.formValues;
             }
 
-            for (var field in task.fields) {
-              final incomingValue = formValues[field.label]?.toString() ?? '';
-
-              if (!_controllers.containsKey(field.label)) {
-                _controllers[field.label] = TextEditingController(
-                  text: incomingValue,
-                );
-              } else {
-                final controller = _controllers[field.label]!;
-                if (controller.text != incomingValue) {
-                  controller.text = incomingValue;
-                  controller.selection = TextSelection.fromPosition(
-                    TextPosition(offset: controller.text.length),
-                  );
-                }
-              }
-            }
+            _syncControllers(task.fields, formValues);
 
             return SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
